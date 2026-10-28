@@ -12,6 +12,7 @@ import CheckInScreen from './screens/CheckInScreen';
 import CustomerDetailScreen from './screens/CustomerDetailScreen';
 import CustomersScreen from './screens/CustomersScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import ScanScreen from './screens/ScanScreen';
 import TransferScreen from './screens/TransferScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -72,6 +73,7 @@ export default function App() {
             screenOptions={{ headerStyle: { backgroundColor: colors.primary }, headerTintColor: '#fff' }}
           >
             <Stack.Screen name="CheckIn" component={CheckInScreen} options={{ title: 'Car Park – Check vehicle' }} />
+            <Stack.Screen name="Scan" component={ScanScreen} options={{ title: 'Scan parking card' }} />
             <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Register customer' }} />
             <Stack.Screen name="Customers" component={CustomersScreen} options={{ title: 'Customers' }} />
             <Stack.Screen name="CustomerDetail" component={CustomerDetailScreen} options={{ title: 'Customer' }} />

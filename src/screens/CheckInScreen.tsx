@@ -1,10 +1,10 @@
 // Main screen: a car arrives, the owner types the number plate and sees what to do.
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
-import { Badge, Button, Card, Field, Row, styles } from '../components/ui';
+import { Badge, Button, Card, Field, Row, colors, styles } from '../components/ui';
 import {
   Customer, Payment, getCustomer, getPaymentForMonth, recordCasualParking, recordPayment,
 } from '../db/database';
@@ -19,12 +19,22 @@ type Lookup =
   | { kind: 'registered'; customer: Customer; payment: Payment | null }
   | { kind: 'unregistered'; vehicleNo: string };
 
-export default function CheckInScreen({ navigation }: ScreenProps<'CheckIn'>) {
+export default function CheckInScreen({ navigation, route }: ScreenProps<'CheckIn'>) {
   const db = useSQLiteContext();
   const [plate, setPlate] = useState('');
+  const [scanned, setScanned] = useState(false);
   const [lookup, setLookup] = useState<Lookup | null>(null);
   const [lastReceipt, setLastReceipt] = useState<ReceiptData | null>(null);
   const month = monthKey();
+
+  // Coming back from the scan screen with a vehicle found by its QR card.
+  useEffect(() => {
+    const p = route.params;
+    if (!p?.vehicleNo) return;
+    setPlate(displayVehicleNo(p.vehicleNo));
+    setScanned(!!p.scanned);
+    navigation.setParams({ vehicleNo: undefined, scanned: undefined });
+  }, [navigation, route.params]);
 
   const search = useCallback(async (text: string) => {
     const vehicleNo = normalizeVehicleNo(text);
@@ -69,13 +79,14 @@ export default function CheckInScreen({ navigation }: ScreenProps<'CheckIn'>) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <Button title="Scan QR card" onPress={() => navigation.navigate('Scan')} style={{ marginTop: 0, marginBottom: 12 }} />
       <Field
-        label="Vehicle number"
+        label="…or type the vehicle number"
         placeholder="e.g. CAB-1234"
         autoCapitalize="characters"
         autoCorrect={false}
         value={plate}
-        onChangeText={(t) => { setPlate(t); search(t); }}
+        onChangeText={(t) => { setPlate(t); setScanned(false); search(t); }}
         style={{ fontSize: 24, fontWeight: '700', letterSpacing: 1 }}
       />
 
@@ -84,7 +95,12 @@ export default function CheckInScreen({ navigation }: ScreenProps<'CheckIn'>) {
         const status = currentMonthStatus(!!payment);
         return (
           <Card>
-            <Text style={styles.h2}>{displayVehicleNo(customer.vehicle_no)} — {customer.name}</Text>
+            {scanned && (
+              <Text style={{ color: colors.amber, fontWeight: '700', marginBottom: 6 }}>
+                Scanned card: check the car's number plate is {displayVehicleNo(customer.vehicle_no)}
+              </Text>
+            )}
+            <Text style={[styles.h2, scanned && { fontSize: 26 }]}>{displayVehicleNo(customer.vehicle_no)} — {customer.name}</Text>
             {customer.active === 0 ? (
               <Badge kind="inactive" text="REGISTRATION DEACTIVATED" />
             ) : status === 'paid' ? (

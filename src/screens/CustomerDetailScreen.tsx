@@ -5,8 +5,9 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { Badge, Button, Card, Row, colors, styles } from '../components/ui';
 import {
   CasualParking, Customer, Payment, deletePayment, getCasualParkingsForVehicle, getCustomer, getPayments,
-  recordPayment,
+  recordPayment, reissueCard,
 } from '../db/database';
+import { printCard, shareCard } from '../lib/card';
 import {
   DUE_DAY, MONTHLY_FEE, addMonths, currentMonthStatus, displayVehicleNo, formatDateTime, monthKey, monthLabel,
   rupees,
@@ -73,6 +74,26 @@ export default function CustomerDetailScreen({ navigation, route }: ScreenProps<
     ]);
   };
 
+  const run = (fn: () => Promise<void>) => () => fn().catch((e) => Alert.alert('Error', String(e?.message ?? e)));
+
+  const reissue = () => {
+    Alert.alert('Reissue card?', 'The current card will stop working immediately. Print the new card and give it to the customer.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reissue',
+        style: 'destructive',
+        onPress: run(async () => {
+          const cardId = await reissueCard(db, vehicleNo);
+          await load();
+          Alert.alert('New card created', `Card ${cardId}`, [
+            { text: 'Later' },
+            { text: 'Print now', onPress: run(() => printCard(vehicleNo, cardId)) },
+          ]);
+        }),
+      },
+    ]);
+  };
+
   // Months since registration that have no payment (excluding the current month while still within grace period).
   const missed: string[] = [];
   if (customer.active === 1) {
@@ -103,6 +124,18 @@ export default function CustomerDetailScreen({ navigation, route }: ScreenProps<
         <Button title="Edit customer" variant="secondary"
           onPress={() => navigation.navigate('Register', { vehicleNo, edit: true })} />
       </Card>
+
+      {customer.active === 1 && customer.card_id && (
+        <Card>
+          <Text style={styles.h2}>Windscreen QR card</Text>
+          <Text style={styles.muted}>Card {customer.card_id}. Print it and give it to the customer to keep behind the windscreen.</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Button title="Print card" style={{ flex: 1 }} onPress={run(() => printCard(vehicleNo, customer.card_id!))} />
+            <Button title="Share card" variant="secondary" style={{ flex: 1 }} onPress={run(() => shareCard(vehicleNo, customer.card_id!))} />
+          </View>
+          <Button title="Reissue card (lost / moved)" variant="danger" onPress={reissue} />
+        </Card>
+      )}
 
       {customer.active === 1 && (
         <Card>

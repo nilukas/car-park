@@ -14,6 +14,9 @@ Offline Android app for running an open-land car park. Built with React Native +
 - **Customer detail**: status, unpaid months since registration, a full payment history, recording a payment for any month, and printing, sharing or deleting receipts.
 - **Report & transfer**: today's collections, the list of unpaid customers, and phone-to-phone data transfer.
 - **Receipts**: print through Android's print service (Bluetooth or Wi-Fi printers), or share as a PDF by WhatsApp, SMS or email.
+- **Windscreen QR cards**: every registered customer gets a card with a random card ID. The card is A6 size and shows a big QR code and the plate number. Print or share it from the customer detail screen. On the check screen, **Scan QR card** opens the camera, which has a torch for night use. After a scan, the app shows the plate large so the owner can check it matches the car.
+  - The QR holds only `CP1:<card id>`, with no name or phone, because anyone outside the car can scan it. A copied card gets nobody anything, because payment status always comes from the owner's phone.
+  - **Reissue card** makes the old card stop working straight away, for example when a card is lost or moved to another car. The new card ID reaches other phones through the normal export and import.
 - **App lock**: asks for the phone's fingerprint or PIN on start and after 5 minutes in the background.
 
 ## Moving data between phones (no cloud)
@@ -56,5 +59,6 @@ src/db/database.ts          SQLite schema and queries
 src/db/transfer.ts          export / validated import + merge
 src/lib/format.ts           fees, dates, plate formatting
 src/lib/receipt.ts          receipt HTML → print / PDF share
+src/lib/card.ts             windscreen QR card (QR generated with the `qrcode` package)
 src/screens/*               UI screens
 ```

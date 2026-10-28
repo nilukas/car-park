@@ -20,7 +20,7 @@ export function monthlyReceipt(p: { receipt_no: string; vehicle_no: string; amou
   return { receiptNo: p.receipt_no, vehicleNo: p.vehicle_no, amount: p.amount, issuedAt: p.paid_at, description: `Monthly fee – ${monthLabel(p.month)}` };
 }
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]!);
 }
 
